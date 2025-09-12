@@ -70,8 +70,11 @@
                     <div x-ref="playerContainer" class="relative bg-black rounded-xl shadow-2xl shadow-indigo-900/20 overflow-hidden w-full max-h-[85vh] flex justify-center items-center">
                         <div x-show="currentVideo.Url" class="plyr-container w-full h-full">
                             <video id="player" playsinline controls><source :src="currentVideo.Url" type="video/mp4" /></video>
-                            <div class="overlay-info font-bold top-4 right-4">ViPlay</div>
-                            <div class="overlay-info text-sm bottom-4 left-4" x-text="`Size: ${currentVideo.size}`"></div>
+                            <div class="overlay-info font-bold top-4 right-4 flex items-center gap-2">
+                                <svg class="w-5 h-5" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientPlayer" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4f46e5;"/><stop offset="100%" style="stop-color:#a855f7;"/></linearGradient></defs><path d="M85,15 L85,85 L15,85 C15,85 45,65 45,50 C45,35 15,15 15,15 Z" fill="url(#logoGradientPlayer)"/></svg>
+                                <span>ViPlay</span>
+                            </div>
+                            <div class="overlay-info text-sm top-4 left-4" x-text="`Size: ${currentVideo.size}`"></div>
                         </div>
                     </div>
                     <div class="mt-8 flex justify-center">
@@ -155,7 +158,6 @@
                             const player = new Plyr('#player');
                             const videoElement = player.media;
                             const containerElement = this.$refs.playerContainer;
-                            
                             videoElement.addEventListener('loadedmetadata', () => {
                                 const videoWidth = videoElement.videoWidth;
                                 const videoHeight = videoElement.videoHeight;
