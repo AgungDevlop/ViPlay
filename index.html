@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViPlay - Unggah & Tonton Video</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <style>
+        .plyr-container { position: relative; }
+        .watermark {
+            position: absolute; top: 20px; right: 20px; z-index: 10;
+            color: white; background-color: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px);
+            padding: 6px 14px; border-radius: 8px; font-family: sans-serif; font-weight: bold;
+            pointer-events: none; opacity: 0.9;
+        }
+        .glow-on-hover:hover { box-shadow: 0 0 15px 2px rgba(99, 102, 241, 0.5); }
+    </style>
+</head>
+<body class="bg-slate-900 font-sans text-slate-300" x-data="viplay">
+    
+    <template x-if="view === 'loading'">
+        <div class="flex items-center justify-center min-h-screen">
+            <svg class="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        </div>
+    </template>
+
+    <template x-if="view === 'player'">
+        <main class="flex flex-col items-center justify-center min-h-screen p-4">
+            <div class="w-full max-w-5xl">
+                <div class="mb-6">
+                    <a href="/" class="text-indigo-400 hover:text-indigo-300 transition-colors duration-300">&larr; Kembali ke Daftar Video</a>
+                </div>
+                <div class="bg-black rounded-xl shadow-2xl shadow-indigo-900/20 overflow-hidden aspect-video">
+                    <div x-show="currentVideo.Url" class="plyr-container">
+                        <video id="player" playsinline controls><source :src="currentVideo.Url" type="video/mp4" /></video>
+                        <div class="watermark">ViPlay</div>
+                    </div>
+                </div>
+                <div class="mt-4 px-2">
+                    <h1 class="text-2xl font-bold text-slate-100" x-text="currentVideo.id"></h1>
+                    <p class="text-slate-400" x-text="`Ukuran: ${currentVideo.size}`"></p>
+                </div>
+            </div>
+        </main>
+    </template>
+
+    <template x-if="view === 'main'">
+        <div class="container mx-auto p-4 md:p-8 max-w-3xl">
+            <header class="text-center mb-12">
+                <div class="flex justify-center items-center gap-4 mb-4">
+                    <svg class="w-14 h-14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4f46e5;"/><stop offset="100%" style="stop-color:#a855f7;"/></linearGradient></defs><path d="M85,15 L85,85 L15,85 C15,85 45,65 45,50 C45,35 15,15 15,15 Z" fill="url(#logoGradient)"/></svg>
+                    <h1 class="text-5xl font-bold text-slate-100">ViPlay</h1>
+                </div>
+                <p class="text-slate-400 mt-2">Unggah dan bagikan video Anda secara pribadi.</p>
+            </header>
+
+            <div class="bg-slate-800 border border-slate-700 p-6 md:p-8 rounded-2xl shadow-xl shadow-slate-900/50 mb-12">
+                <input type="file" @change="handleFileSelect" x-ref="fileInput" class="hidden" accept="video/*">
+                
+                <template x-if="!uploading">
+                    <div @click="$refs.fileInput.click()" @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="handleFileDrop"
+                        class="border-2 border-dashed border-slate-600 rounded-lg p-10 text-center cursor-pointer transition-all duration-300"
+                        :class="{'border-indigo-500 bg-slate-700/50 ring-4 ring-indigo-500/20': dragging, 'hover:border-slate-500 hover:bg-slate-700/30': !dragging}">
+                        <svg class="mx-auto h-12 w-12 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3 17.25V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 17.25z" /></svg>
+                        <p class="mt-2 text-slate-300">Seret video di sini atau <span class="font-semibold text-indigo-400">pilih file</span></p>
+                        <p class="text-xs text-slate-500 mt-1">MP4, WEBM, MOV, MKV, AVI (Maks 150MB)</p>
+                    </div>
+                </template>
+                
+                <template x-if="uploading">
+                    <div class="p-4 bg-slate-700/50 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            <div class="w-full">
+                                <p class="text-slate-200 font-medium truncate" x-text="fileName"></p>
+                                <div class="flex items-center justify-between text-sm text-slate-400">
+                                    <p>Mengunggah...</p>
+                                    <p x-text="`${progress}%`"></p>
+                                </div>
+                                <div class="w-full bg-slate-600 rounded-full h-2.5 mt-1"><div class="bg-gradient-to-r from-indigo-500 to-violet-500 h-2.5 rounded-full" :style="`width: ${progress}%`"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="message" class="mt-4 p-4 rounded-md text-sm" :class="messageType === 'success' ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300'" x-html="message"></div>
+                
+                <div x-show="uploadSuccess" class="mt-4">
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Link Video Anda:</label>
+                    <div class="relative">
+                        <input type="text" :value="shareableLink" readonly class="bg-slate-700 border border-slate-600 text-slate-300 rounded-lg w-full py-2 px-3 pr-10 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <button @click="copyToClipboard" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-white transition">
+                            <svg x-show="copyText === 'Copy'" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.03 1.125 0 1.131.094 1.976 1.057 1.976 2.192V7.5m-9 7.5h9v-7.5h-9v7.5zm9 0h.375a2.25 2.25 0 002.25-2.25V6.375a2.25 2.25 0 00-2.25-2.25H8.625a2.25 2.25 0 00-2.25 2.25v8.375a2.25 2.25 0 002.25 2.25h.375z" /></svg>
+                            <svg x-show="copyText === 'Copied!'" class="w-5 h-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l4.001-5.5z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <section>
+                <h2 class="text-2xl font-semibold text-slate-200 mb-6">Video Tersimpan</h2>
+                <div x-show="videos.length === 0" class="text-slate-500 text-center py-8">Belum ada video yang diunggah.</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="video in videos" :key="video.id">
+                        <a :href="`?v=${video.id}`" class="bg-slate-800 border border-slate-700 rounded-xl p-5 flex items-center space-x-4 transition-all duration-300 glow-on-hover">
+                            <div class="flex-shrink-0 h-12 w-12 flex items-center justify-center bg-indigo-500/20 text-indigo-400 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></div>
+                            <div><p class="font-semibold text-slate-200 truncate" x-text="video.id"></p><p class="text-sm text-slate-400" x-text="video.size"></p></div>
+                        </a>
+                    </template>
+                </div>
+            </section>
+        </div>
+    </template>
+    
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('viplay', () => ({
+            view: 'loading', videos: [], currentVideo: {}, dragging: false, uploading: false,
+            progress: 0, fileName: '', message: '', messageType: '', uploadSuccess: false,
+            shareableLink: '', copyText: 'Copy',
+            endpoints: { upload: 'https://stream.videyhost.my.id/upload.php', data: 'https://stream.videyhost.my.id/data.json' },
+            apiToken: 'ViPlayToken',
+
+            init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const videoId = urlParams.get('v');
+                if (videoId) this.loadPlayer(videoId); else this.loadVideoList();
+            },
+            async loadVideoList() {
+                try {
+                    const response = await fetch(`${this.endpoints.data}?t=${Date.now()}`);
+                    if (!response.ok) throw new Error('Gagal memuat daftar video.');
+                    this.videos = await response.json();
+                } catch (e) { this.message = 'Tidak dapat terhubung ke server data.'; this.messageType = 'error'; } 
+                finally { this.view = 'main'; }
+            },
+            async loadPlayer(videoId) {
+                try {
+                    const response = await fetch(`${this.endpoints.data}?t=${Date.now()}`);
+                    if (!response.ok) throw new Error('Gagal memuat data video.');
+                    const data = await response.json();
+                    const video = data.find(v => v.id === videoId);
+                    if (video) {
+                        this.currentVideo = video;
+                        this.view = 'player';
+                        this.$nextTick(() => { new Plyr('#player'); });
+                    } else { window.location.href = '/'; }
+                } catch (e) { window.location.href = '/'; }
+            },
+            handleFileSelect(e) { this.uploadFile(e.target.files[0]); },
+            handleFileDrop(e) { this.dragging = false; this.uploadFile(e.dataTransfer.files[0]); },
+            uploadFile(file) {
+                if (!file) return;
+                const maxFileSize = 150 * 1024 * 1024;
+                const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska', 'video/x-msvideo'];
+                if (file.size > maxFileSize) { this.message = 'Ukuran file melebihi 150MB.'; this.messageType = 'error'; return; }
+                if (!allowedTypes.includes(file.type)) { this.message = 'Format video tidak diizinkan.'; this.messageType = 'error'; return; }
+                this.uploading = true; this.progress = 0; this.message = ''; this.fileName = file.name;
+                this.uploadSuccess = false; this.shareableLink = '';
+                const formData = new FormData();
+                formData.append('file', file);
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', this.endpoints.upload, true);
+                xhr.setRequestHeader('ApiToken', this.apiToken);
+                xhr.upload.onprogress = (e) => { if (e.lengthComputable) this.progress = Math.round((e.loaded / e.total) * 100); };
+                xhr.onload = () => {
+                    this.uploading = false;
+                    this.$refs.fileInput.value = '';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        this.message = response.message;
+                        if (xhr.status >= 200 && xhr.status < 300 && response.success) {
+                            this.messageType = 'success';
+                            this.videos.unshift(response.data);
+                            this.uploadSuccess = true;
+                            this.shareableLink = `https://viplay.top/?v=${response.data.id}`;
+                        } else { this.messageType = 'error'; }
+                    } catch (e) { this.messageType = 'error'; this.message = 'Terjadi kesalahan dari server.'; }
+                };
+                xhr.onerror = () => { this.uploading = false; this.messageType = 'error'; this.message = 'Terjadi kesalahan jaringan.'; };
+                xhr.send(formData);
+            },
+            copyToClipboard() {
+                navigator.clipboard.writeText(this.shareableLink);
+                this.copyText = 'Copied!';
+                setTimeout(() => { this.copyText = 'Copy'; }, 2000);
+            }
+        }));
+    });
+    </script>
+</body>
+</html>
