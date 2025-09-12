@@ -16,19 +16,22 @@
                     <svg class="w-14 h-14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientDL" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4f46e5;"/><stop offset="100%" style="stop-color:#a855f7;"/></linearGradient></defs><path d="M85,15 L85,85 L15,85 C15,85 45,65 45,50 C45,35 15,15 15,15 Z" fill="url(#logoGradientDL)"/></svg>
                     <h1 class="text-5xl font-bold text-slate-100">ViPlay</h1>
                 </div>
-                <p class="text-slate-400 mt-2 mb-8" x-text="statusText"></p>
-
-                <div class="w-full bg-slate-600 rounded-full h-4 mb-2 overflow-hidden">
-                    <div class="bg-gradient-to-r from-indigo-500 to-violet-500 h-4 rounded-full transition-all duration-500" :style="`width: ${progress}%`"></div>
+                
+                <div x-show="!downloadStarted">
+                    <p class="text-slate-400 mt-2 mb-8">Mempersiapkan unduhan Anda...</p>
+                    <div class="flex items-center justify-center">
+                        <svg class="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </div>
                 </div>
-                <p class="text-sm text-slate-400 mb-8" x-text="`${progress.toFixed(0)}%`"></p>
 
-                <button @click="triggerDownload" :disabled="!isReady" 
-                        :class="isReady ? 'bg-indigo-600 hover:bg-indigo-500 cursor-pointer' : 'bg-slate-600 cursor-not-allowed opacity-50'"
-                        class="w-full text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
-                    <span>Download Sekarang</span>
-                </button>
+                <div x-show="downloadStarted">
+                    <p class="text-slate-400 mt-2 mb-8">Unduhan Anda telah dimulai. Jika tidak, klik tombol di bawah.</p>
+                    <button @click="triggerDownload" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
+                        <span>Download Manual</span>
+                    </button>
+                </div>
+
             </div>
         </template>
         
@@ -45,63 +48,27 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('downloadPage', () => ({
             isValid: false,
-            videoUrl: '',
             videoId: '',
-            isReady: false,
-            statusText: 'Mempersiapkan unduhan...',
-            progress: 0,
-            blobUrl: null,
+            downloadStarted: false,
+            proxyUrl: 'https://stream.videyhost.my.id/download_proxy.php',
 
-            async init() {
-                this.videoUrl = sessionStorage.getItem('viplayDownloadUrl');
-                this.videoId = sessionStorage.getItem('viplayDownloadId') || 'video.mp4';
+            init() {
+                this.videoId = sessionStorage.getItem('viplayDownloadId');
                 
-                if (this.videoUrl) {
+                if (this.videoId) {
                     this.isValid = true;
-                    this.statusText = 'Mengunduh data video...';
-                    
-                    try {
-                        const response = await fetch(this.videoUrl);
-                        if (!response.ok) throw new Error('Gagal mengambil video dari CDN.');
-
-                        const contentLength = +response.headers.get('Content-Length');
-                        const reader = response.body.getReader();
-                        let receivedLength = 0;
-                        let chunks = [];
-
-                        while(true) {
-                            const { done, value } = await reader.read();
-                            if (done) break;
-                            chunks.push(value);
-                            receivedLength += value.length;
-                            if (contentLength) {
-                                this.progress = (receivedLength / contentLength) * 100;
-                            }
-                        }
-
-                        const blob = new Blob(chunks, { type: 'video/mp4' });
-                        this.blobUrl = URL.createObjectURL(blob);
-                        this.isReady = true;
-                        this.statusText = 'Video Anda siap untuk diunduh.';
-
-                    } catch(error) {
-                        this.statusText = 'Gagal memuat video. Silakan coba lagi.';
-                        console.error('Download error:', error);
-                    }
+                    setTimeout(() => {
+                        this.triggerDownload();
+                    }, 2000); // Tunggu 2 detik sebelum memulai otomatis
                 } else {
                     this.isValid = false;
                 }
             },
             
             triggerDownload() {
-                if (!this.isReady || !this.blobUrl) return;
-                const link = document.createElement('a');
-                link.href = this.blobUrl;
-                link.download = `${this.videoId}.mp4`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(this.blobUrl);
+                if (!this.videoId) return;
+                this.downloadStarted = true;
+                window.location.href = `${this.proxyUrl}?id=${this.videoId}`;
             }
         }));
     });
