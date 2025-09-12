@@ -124,7 +124,7 @@
             view: 'loading', currentVideo: {}, dragging: false, uploading: false,
             progress: 0, fileName: '', message: '', messageType: '', uploadSuccess: false,
             shareableLink: '', copyText: 'Copy',
-            endpoints: { upload: 'https://stream.videyhost.my.id/upload.php', data: 'https://stream.videyhost.my.id/data.json' },
+            endpoints: { upload: 'https://stream.videyhost.my.id/upload.php', data: 'https://stream.videyhost.my.id/get_data.php' }, // DIUBAH
             apiToken: 'ViPlayToken',
             init() {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -135,14 +135,21 @@
             async loadPlayer(videoId) {
                 try {
                     const response = await fetch(`${this.endpoints.data}?t=${Date.now()}`);
-                    if (!response.ok) throw new Error('Gagal memuat data video.');
+                    if (!response.ok) { throw new Error(`Network response was not ok. Status: ${response.status}`); }
                     const data = await response.json();
                     const video = data.find(v => v.id == videoId); // PERBAIKAN: Menggunakan '==' bukan '==='
                     if (video) {
-                        this.currentVideo = video; this.view = 'player';
+                        this.currentVideo = video;
+                        this.view = 'player';
                         this.$nextTick(() => { new Plyr('#player'); });
-                    } else { window.location.href = '/'; }
-                } catch (e) { window.location.href = '/'; }
+                    } else {
+                        console.warn(`Video with ID "${videoId}" not found. Redirecting.`);
+                        window.location.href = '/';
+                    }
+                } catch (e) {
+                    console.error("Failed to load video data, redirecting. Error:", e);
+                    window.location.href = '/';
+                }
             },
             initiateDownload() {
                 sessionStorage.setItem('viplayDownloadUrl', this.currentVideo.Url);
