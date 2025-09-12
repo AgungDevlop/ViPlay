@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Video - ViPlay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-slate-900 font-sans text-slate-300">
+    <div x-data="downloadPage" class="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        
+        <template x-if="isValid">
+            <div class="bg-slate-800 border border-slate-700 p-8 md:p-12 rounded-2xl shadow-xl shadow-slate-900/50 max-w-lg w-full">
+                <div class="flex justify-center items-center gap-4 mb-4">
+                    <svg class="w-14 h-14" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4f46e5;"/><stop offset="100%" style="stop-color:#a855f7;"/></linearGradient></defs><path d="M85,15 L85,85 L15,85 C15,85 45,65 45,50 C45,35 15,15 15,15 Z" fill="url(#logoGradient)"/></svg>
+                    <h1 class="text-5xl font-bold text-slate-100">ViPlay</h1>
+                </div>
+                <p class="text-slate-400 mt-2 mb-8">Video Anda siap untuk diunduh.</p>
+
+                <div class="bg-slate-700/50 p-4 rounded-lg mb-8">
+                    <p class="text-slate-300">Nama File:</p>
+                    <p class="font-semibold text-white truncate" x-text="videoId"></p>
+                </div>
+
+                <a :href="videoUrl" download :class="isReady ? 'bg-indigo-600 hover:bg-indigo-500 cursor-pointer' : 'bg-slate-600 cursor-not-allowed'"
+                   class="w-full text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300">
+                    <svg x-show="isReady" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
+                    <span x-text="isReady ? 'Download Sekarang' : `Harap Tunggu... (${countdown})`"></span>
+                </a>
+            </div>
+        </template>
+        
+        <template x-if="!isValid">
+            <div class="bg-slate-800 border border-slate-700 p-8 md:p-12 rounded-2xl">
+                <h2 class="text-3xl font-bold text-red-400 mb-4">Link Tidak Valid</h2>
+                <p class="text-slate-400 mb-6">Link unduhan tidak ditemukan. Silakan kembali dan coba lagi.</p>
+                <a href="/" class="text-indigo-400 hover:text-indigo-300 font-semibold">Kembali ke Halaman Utama</a>
+            </div>
+        </template>
+    </div>
+
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('downloadPage', () => ({
+            isValid: false,
+            videoUrl: '',
+            videoId: '',
+            isReady: false,
+            countdown: 3,
+            init() {
+                this.videoUrl = sessionStorage.getItem('viplayDownloadUrl');
+                this.videoId = sessionStorage.getItem('viplayDownloadId') || 'video.mp4';
+                if (this.videoUrl) {
+                    this.isValid = true;
+                    const interval = setInterval(() => {
+                        this.countdown--;
+                        if (this.countdown === 0) {
+                            clearInterval(interval);
+                            this.isReady = true;
+                        }
+                    }, 1000);
+                } else {
+                    this.isValid = false;
+                }
+            }
+        }));
+    });
+    </script>
+</body>
+</html>
