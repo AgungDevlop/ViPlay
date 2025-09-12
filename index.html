@@ -67,8 +67,8 @@
             </header>
             <main class="flex-grow flex flex-col items-center justify-center p-4 md:p-8">
                 <div class="w-full max-w-5xl">
-                    <div class="relative bg-black rounded-xl shadow-2xl shadow-indigo-900/20 overflow-hidden aspect-video">
-                        <div x-show="currentVideo.Url" class="plyr-container">
+                    <div x-ref="playerContainer" class="relative bg-black rounded-xl shadow-2xl shadow-indigo-900/20 overflow-hidden w-full max-h-[85vh] flex justify-center items-center">
+                        <div x-show="currentVideo.Url" class="plyr-container w-full h-full">
                             <video id="player" playsinline controls><source :src="currentVideo.Url" type="video/mp4" /></video>
                             <div class="overlay-info font-bold top-4 right-4">ViPlay</div>
                             <div class="overlay-info text-sm bottom-4 left-4" x-text="`Size: ${currentVideo.size}`"></div>
@@ -145,19 +145,29 @@
             async loadPlayer(videoId) {
                 try {
                     const response = await fetch(`${this.endpoints.data}?t=${Date.now()}`);
-                    if (!response.ok) { throw new Error(`Network response was not ok. Status: ${response.status}`); }
+                    if (!response.ok) { throw new Error(`Network response was not ok.`); }
                     const data = await response.json();
                     const video = data.find(v => v.id == videoId);
                     if (video) {
                         this.currentVideo = video;
                         this.view = 'player';
-                        this.$nextTick(() => { new Plyr('#player'); });
+                        this.$nextTick(() => {
+                            const player = new Plyr('#player');
+                            const videoElement = player.media;
+                            const containerElement = this.$refs.playerContainer;
+                            
+                            videoElement.addEventListener('loadedmetadata', () => {
+                                const videoWidth = videoElement.videoWidth;
+                                const videoHeight = videoElement.videoHeight;
+                                if (videoHeight > 0) {
+                                    containerElement.style.aspectRatio = videoWidth / videoHeight;
+                                }
+                            });
+                        });
                     } else {
-                        console.warn(`Video with ID "${videoId}" not found. Redirecting.`);
                         window.location.href = '/';
                     }
                 } catch (e) {
-                    console.error("Failed to load video data, redirecting. Error:", e);
                     window.location.href = '/';
                 }
             },
