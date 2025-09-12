@@ -3,11 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ViPlay - Unggah & Tonton Video</title>
+    <title>ViPlay - Unggah & Tonton Video Pribadi</title>
+    <meta name="description" content="ViPlay adalah platform gratis untuk mengunggah, menyimpan, dan membagikan video Anda secara pribadi dan aman. Nikmati pemutar video yang cepat dan modern.">
+    <meta name="keywords" content="unggah video, hosting video, video pribadi, berbagi video, viplay, video gratis, simpan video">
+    <link rel="canonical" href="https://viplay.top/">
+    <meta property="og:title" content="ViPlay - Unggah & Tonton Video Pribadi">
+    <meta property="og:description" content="Platform gratis untuk mengunggah, menyimpan, dan membagikan video Anda secara pribadi dan aman.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://viplay.top/">
+    <meta property="og:image" content="https://viplay.top/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ViPlay - Unggah & Tonton Video Pribadi">
+    <meta name="twitter:description" content="Platform gratis untuk mengunggah, menyimpan, dan membagikan video Anda secara pribadi dan aman.">
+    <meta name="twitter:image" content="https://viplay.top/og-image.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "ViPlay",
+      "url": "https://viplay.top/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://viplay.top/?v={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
     <style>
         .plyr-container { position: relative; }
         .watermark {
@@ -39,9 +64,15 @@
                         <div class="watermark">ViPlay</div>
                     </div>
                 </div>
-                <div class="mt-4 px-2">
-                    <h1 class="text-2xl font-bold text-slate-100" x-text="currentVideo.id"></h1>
-                    <p class="text-slate-400" x-text="`Ukuran: ${currentVideo.size}`"></p>
+                <div class="mt-6 px-2 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-100" x-text="currentVideo.id"></h1>
+                        <p class="text-slate-400" x-text="`Ukuran: ${currentVideo.size}`"></p>
+                    </div>
+                    <button @click="initiateDownload" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 glow-on-hover">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
+                        Download Video
+                    </button>
                 </div>
             </div>
         </main>
@@ -56,10 +87,8 @@
                 </div>
                 <p class="text-slate-400 mt-2">Unggah dan bagikan video Anda secara pribadi.</p>
             </header>
-
             <div class="bg-slate-800 border border-slate-700 p-6 md:p-8 rounded-2xl shadow-xl shadow-slate-900/50 mb-12">
                 <input type="file" @change="handleFileSelect" x-ref="fileInput" class="hidden" accept="video/*">
-                
                 <template x-if="!uploading">
                     <div @click="$refs.fileInput.click()" @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="handleFileDrop"
                         class="border-2 border-dashed border-slate-600 rounded-lg p-10 text-center cursor-pointer transition-all duration-300"
@@ -69,7 +98,6 @@
                         <p class="text-xs text-slate-500 mt-1">MP4, WEBM, MOV, MKV, AVI (Maks 150MB)</p>
                     </div>
                 </template>
-                
                 <template x-if="uploading">
                     <div class="p-4 bg-slate-700/50 rounded-lg">
                         <div class="flex items-center space-x-4">
@@ -77,38 +105,25 @@
                             <div class="w-full">
                                 <p class="text-slate-200 font-medium truncate" x-text="fileName"></p>
                                 <div class="flex items-center justify-between text-sm text-slate-400">
-                                    <p>Mengunggah...</p>
-                                    <p x-text="`${progress}%`"></p>
+                                    <p>Mengunggah...</p><p x-text="`${progress}%`"></p>
                                 </div>
                                 <div class="w-full bg-slate-600 rounded-full h-2.5 mt-1"><div class="bg-gradient-to-r from-indigo-500 to-violet-500 h-2.5 rounded-full" :style="`width: ${progress}%`"></div></div>
                             </div>
                         </div>
                     </div>
                 </template>
-
                 <div x-show="message" class="mt-4 p-4 rounded-md text-sm" :class="messageType === 'success' ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300'" x-html="message"></div>
-                
                 <div x-show="uploadSuccess" class="mt-4">
                     <label class="block text-sm font-medium text-slate-300 mb-1">Link Video Anda:</label>
-                    <div class="relative">
-                        <input type="text" :value="shareableLink" readonly class="bg-slate-700 border border-slate-600 text-slate-300 rounded-lg w-full py-2 px-3 pr-10 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <button @click="copyToClipboard" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-white transition">
-                            <svg x-show="copyText === 'Copy'" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.03 1.125 0 1.131.094 1.976 1.057 1.976 2.192V7.5m-9 7.5h9v-7.5h-9v7.5zm9 0h.375a2.25 2.25 0 002.25-2.25V6.375a2.25 2.25 0 00-2.25-2.25H8.625a2.25 2.25 0 00-2.25 2.25v8.375a2.25 2.25 0 002.25 2.25h.375z" /></svg>
-                            <svg x-show="copyText === 'Copied!'" class="w-5 h-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l4.001-5.5z" clip-rule="evenodd" /></svg>
-                        </button>
-                    </div>
+                    <div class="relative"><input type="text" :value="shareableLink" readonly class="bg-slate-700 border border-slate-600 text-slate-300 rounded-lg w-full py-2 px-3 pr-10 focus:ring-2 focus:ring-indigo-500 focus:outline-none"><button @click="copyToClipboard" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-white transition"><svg x-show="copyText === 'Copy'" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.03 1.125 0 1.131.094 1.976 1.057 1.976 2.192V7.5m-9 7.5h9v-7.5h-9v7.5zm9 0h.375a2.25 2.25 0 002.25-2.25V6.375a2.25 2.25 0 00-2.25-2.25H8.625a2.25 2.25 0 00-2.25 2.25v8.375a2.25 2.25 0 002.25 2.25h.375z" /></svg><svg x-show="copyText === 'Copied!'" class="w-5 h-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l4.001-5.5z" clip-rule="evenodd" /></svg></button></div>
                 </div>
             </div>
-
             <section>
                 <h2 class="text-2xl font-semibold text-slate-200 mb-6">Video Tersimpan</h2>
                 <div x-show="videos.length === 0" class="text-slate-500 text-center py-8">Belum ada video yang diunggah.</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="video in videos" :key="video.id">
-                        <a :href="`?v=${video.id}`" class="bg-slate-800 border border-slate-700 rounded-xl p-5 flex items-center space-x-4 transition-all duration-300 glow-on-hover">
-                            <div class="flex-shrink-0 h-12 w-12 flex items-center justify-center bg-indigo-500/20 text-indigo-400 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></div>
-                            <div><p class="font-semibold text-slate-200 truncate" x-text="video.id"></p><p class="text-sm text-slate-400" x-text="video.size"></p></div>
-                        </a>
+                        <a :href="`?v=${video.id}`" class="bg-slate-800 border border-slate-700 rounded-xl p-5 flex items-center space-x-4 transition-all duration-300 glow-on-hover"><div class="flex-shrink-0 h-12 w-12 flex items-center justify-center bg-indigo-500/20 text-indigo-400 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></div><div><p class="font-semibold text-slate-200 truncate" x-text="video.id"></p><p class="text-sm text-slate-400" x-text="video.size"></p></div></a>
                     </template>
                 </div>
             </section>
@@ -123,7 +138,6 @@
             shareableLink: '', copyText: 'Copy',
             endpoints: { upload: 'https://stream.videyhost.my.id/upload.php', data: 'https://stream.videyhost.my.id/data.json' },
             apiToken: 'ViPlayToken',
-
             init() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const videoId = urlParams.get('v');
@@ -144,11 +158,20 @@
                     const data = await response.json();
                     const video = data.find(v => v.id === videoId);
                     if (video) {
-                        this.currentVideo = video;
-                        this.view = 'player';
+                        this.currentVideo = video; this.view = 'player';
                         this.$nextTick(() => { new Plyr('#player'); });
                     } else { window.location.href = '/'; }
                 } catch (e) { window.location.href = '/'; }
+            },
+            initiateDownload() {
+                sessionStorage.setItem('viplayDownloadUrl', this.currentVideo.Url);
+                sessionStorage.setItem('viplayDownloadId', this.currentVideo.id);
+                window.open('download.html', '_blank');
+                setTimeout(() => {
+                    const adLinks = ['https://link-iklan-1.com', 'https://link-iklan-2.com'];
+                    const randomAd = adLinks[Math.floor(Math.random() * adLinks.length)];
+                    window.location.href = randomAd;
+                }, 2000);
             },
             handleFileSelect(e) { this.uploadFile(e.target.files[0]); },
             handleFileDrop(e) { this.dragging = false; this.uploadFile(e.dataTransfer.files[0]); },
