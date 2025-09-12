@@ -120,7 +120,10 @@
             </div>
             <section>
                 <h2 class="text-2xl font-semibold text-slate-200 mb-6">Video Tersimpan</h2>
-                <div x-show="videos.length === 0" class="text-slate-500 text-center py-8">Belum ada video yang diunggah.</div>
+                <div x-show="videos.length === 0" class="text-slate-500 text-center py-8">
+                    <p x-show="!listLoading">Daftar video akan muncul di sini setelah Anda mengunggah.</p>
+                    <p x-show="listLoading">Memuat daftar video...</p>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="video in videos" :key="video.id">
                         <a :href="`?v=${video.id}`" class="bg-slate-800 border border-slate-700 rounded-xl p-5 flex items-center space-x-4 transition-all duration-300 glow-on-hover"><div class="flex-shrink-0 h-12 w-12 flex items-center justify-center bg-indigo-500/20 text-indigo-400 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></div><div><p class="font-semibold text-slate-200 truncate" x-text="video.id"></p><p class="text-sm text-slate-400" x-text="video.size"></p></div></a>
@@ -135,21 +138,28 @@
         Alpine.data('viplay', () => ({
             view: 'loading', videos: [], currentVideo: {}, dragging: false, uploading: false,
             progress: 0, fileName: '', message: '', messageType: '', uploadSuccess: false,
-            shareableLink: '', copyText: 'Copy',
+            shareableLink: '', copyText: 'Copy', listLoading: false,
             endpoints: { upload: 'https://stream.videyhost.my.id/upload.php', data: 'https://stream.videyhost.my.id/data.json' },
             apiToken: 'ViPlayToken',
             init() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const videoId = urlParams.get('v');
-                if (videoId) this.loadPlayer(videoId); else this.loadVideoList();
+                if (videoId) { this.loadPlayer(videoId); } 
+                else { this.view = 'main'; }
             },
             async loadVideoList() {
+                this.listLoading = true;
+                this.message = '';
                 try {
                     const response = await fetch(`${this.endpoints.data}?t=${Date.now()}`);
                     if (!response.ok) throw new Error('Gagal memuat daftar video.');
                     this.videos = await response.json();
-                } catch (e) { this.message = 'Tidak dapat terhubung ke server data.'; this.messageType = 'error'; } 
-                finally { this.view = 'main'; }
+                } catch (e) {
+                    this.message = 'Gagal memuat daftar video dari server.';
+                    this.messageType = 'error';
+                } finally {
+                    this.listLoading = false;
+                }
             },
             async loadPlayer(videoId) {
                 try {
@@ -197,9 +207,9 @@
                         this.message = response.message;
                         if (xhr.status >= 200 && xhr.status < 300 && response.success) {
                             this.messageType = 'success';
-                            this.videos.unshift(response.data);
                             this.uploadSuccess = true;
                             this.shareableLink = `https://viplay.top/?v=${response.data.id}`;
+                            this.loadVideoList();
                         } else { this.messageType = 'error'; }
                     } catch (e) { this.messageType = 'error'; this.message = 'Terjadi kesalahan dari server.'; }
                 };
